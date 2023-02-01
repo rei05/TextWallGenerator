@@ -1,0 +1,6 @@
+*.exe
+*.spec
+fonts/
+generated_files/
+build/
+dist/
