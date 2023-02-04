@@ -180,13 +180,30 @@ def GetInputSettings(filename):
     try:
         with open(filename, encoding='shift_jis', newline='') as f:
             rows = [row for row in csv.reader(f)]
-        setting_keys = rows[0]
-        input_settings = [dict(zip(setting_keys, setting_values)) for setting_values in rows[1:]]           
-        return input_settings
     except:
         print(f"[ERROR] {filename}の取得に失敗しました。")
         os.system('PAUSE'); exit()
+    setting_keys = rows[0]
+    input_settings = [dict(zip(setting_keys, setting_values)) for setting_values in rows[1:]]          
+    return input_settings
 
+def CheckInputValue(input_settings):
+    expected_types = {"Text":str,"TrackName":str,"StartBeatTime":float,"Duration":float,
+                      "Direction":str,"Font":str,"DotSize":int,"Behavior":str}
+    for i_row, setting in enumerate(input_settings):
+        for expected_key, expected_type in expected_types.items():
+            if expected_key not in setting.keys():
+                print(f"[ERROR] {expected_key}の取得に失敗しました。")
+                os.system('PAUSE'); exit()
+            if (expected_type==float)|(expected_type==int):
+                try:
+                    float(setting[expected_key])
+                except:
+                    print(f"[ERROR] {i_row+2}行目の{expected_key}の値が不正です。")
+                    os.system('PAUSE'); exit()
+            if setting[expected_key].split()[0]=="":
+                print(f"[ERROR] {i_row+2}行目の{expected_key}の値が不正です。")
+                os.system('PAUSE'); exit()
 
 if __name__ == '__main__':
 
@@ -194,6 +211,7 @@ if __name__ == '__main__':
         env_settings = yaml.safe_load(f)
 
     input_settings = GetInputSettings('input.csv')
+    CheckInputValue(input_settings)
 
     customEvents = []
 
