@@ -213,16 +213,11 @@ def CheckInputValue(input_settings):
                 print(f"[ERROR] {i_row+2}行目の{expected_key}の値が不正です。")
                 os.system('PAUSE'); exit()
 
-if __name__ == '__main__':
-
-    env_settings = GetEnvSettings('settings.yaml')
-
-    input_settings = GetInputSettings('input.csv')
-    CheckInputValue(input_settings)
+def main(env_settings, input_settings):
 
     customEvents = []
+    obstacles_dict = {}
 
-    os.makedirs("generated_files", exist_ok=True)
 
     for setting in input_settings:
         text       = setting["Text"]
@@ -283,19 +278,30 @@ if __name__ == '__main__':
             if isSmall(char) & (direction != "v"):
                 charShift -= size*0.15
 
-        with open('generated_files/'+track_name+'.dat','w') as f:
-            dat = json.dumps(obstacles["_obstacles"], indent=4)[6:-2].replace("\n    ","\n")
-            f.write(dat)
+        obstacles_dict[track_name] = obstacles
 
         customEvents.append({'_time':0,'_type':'AssignTrackParent',
                              '_data':{'_parentTrack': track_name,
                                       '_childrenTracks': child_tracks}
                             })
+        
+    return obstacles_dict, customEvents
 
+
+if __name__ == '__main__':
+
+    env_settings   = GetEnvSettings('settings.yaml')
+    input_settings = GetInputSettings('input.csv')
+    CheckInputValue(input_settings)
+    os.makedirs("generated_files", exist_ok=True)
+    obstacles_dict, customEvents = main(env_settings, input_settings)
+    for track_name, obstacles in obstacles_dict.items():
+        with open('generated_files/'+track_name+'.dat','w') as f:
+            dat = json.dumps(obstacles["_obstacles"], indent=4)[6:-2].replace("\n    ","\n")
+            f.write(dat)
     parentTracksData = {'_customData':{'_customEvents':customEvents}}
     with open('generated_files/parentTracks.dat','w') as f:
         dat = json.dumps(parentTracksData["_customData"]["_customEvents"], indent=4)[6:-2].replace("\n    ","\n")
         f.write(dat)
-
     print("Completed!")
     os.system('PAUSE')
