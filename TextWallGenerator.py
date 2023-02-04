@@ -175,6 +175,14 @@ def makeWall(char,font,n_dot):
     dat = {'_obstacles':_obstacles}
     return dat
 
+def GetEnvSettings(filename):
+    try:
+        with open(filename) as f:
+            env_settings = yaml.safe_load(f)
+    except:
+        print(f"[ERROR] {filename}の取得に失敗しました。")
+        os.system('PAUSE'); exit()
+    return env_settings
 
 def GetInputSettings(filename):
     try:
@@ -207,8 +215,7 @@ def CheckInputValue(input_settings):
 
 if __name__ == '__main__':
 
-    with open('settings.yaml') as f:
-        env_settings = yaml.safe_load(f)
+    env_settings = GetEnvSettings('settings.yaml')
 
     input_settings = GetInputSettings('input.csv')
     CheckInputValue(input_settings)
