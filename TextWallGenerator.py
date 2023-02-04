@@ -176,31 +176,41 @@ def makeWall(char,font,n_dot):
     return dat
 
 
+def GetInputSettings(filename):
+    try:
+        with open(filename, encoding='shift_jis', newline='') as f:
+            rows = [row for row in csv.reader(f)]
+        setting_keys = rows[0]
+        input_settings = [dict(zip(setting_keys, setting_values)) for setting_values in rows[1:]]           
+        return input_settings
+    except:
+        print(f"[ERROR] {filename}の取得に失敗しました。")
+        os.system('PAUSE'); exit()
+
 
 if __name__ == '__main__':
 
     with open('settings.yaml') as f:
-        settings = yaml.safe_load(f)
+        env_settings = yaml.safe_load(f)
 
-    with open('input.csv', encoding='shift_jis', newline='') as f:
-        setting = [row for row in csv.reader(f)][1:]
+    input_settings = GetInputSettings('input.csv')
 
     customEvents = []
 
     os.makedirs("generated_files", exist_ok=True)
 
-    for row in setting:
-        text       = row[0]
-        track_name = row[1]
-        t_start    = float(row[2])
-        duration   = float(row[3]) - settings["HJD"]*2
-        direction  = row[4]
-        font       = "fonts/" + row[5]
-        dot_size   = int(row[6])
-        behavior   = row[7]
+    for setting in input_settings:
+        text       = setting["Text"]
+        track_name = setting["TrackName"]
+        t_start    = float(setting["StartBeatTime"])
+        duration   = float(setting["Duration"]) - env_settings["HJD"]*2
+        direction  = setting["Direction"]
+        font       = "fonts/" + setting["Font"]
+        dot_size   = int(setting["DotSize"])
+        behavior   = setting["Behavior"]
         length     = len(text)
         size       = 1
-        time       = t_start + settings["HJD"]
+        time       = t_start + env_settings["HJD"]
         
         charShift = 1
         obstacles = {"_obstacles":[]}

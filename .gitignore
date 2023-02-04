@@ -1,5 +1,6 @@
 *.exe
 *.spec
+__pycache__/
 fonts/
 generated_files/
 build/
