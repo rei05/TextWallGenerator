@@ -293,15 +293,25 @@ if __name__ == '__main__':
     env_settings   = GetEnvSettings('settings.yaml')
     input_settings = GetInputSettings('input.csv')
     CheckInputValue(input_settings)
+
     os.makedirs("generated_files", exist_ok=True)
+
     obstacles_dict, customEvents = main(env_settings, input_settings)
+    parentTracksData = {'_customData':{'_customEvents':customEvents}}
+
+    dat_list = []
     for track_name, obstacles in obstacles_dict.items():
         with open('generated_files/'+track_name+'.dat','w') as f:
             dat = json.dumps(obstacles["_obstacles"], indent=4)[6:-2].replace("\n    ","\n")
             f.write(dat)
-    parentTracksData = {'_customData':{'_customEvents':customEvents}}
+            dat_list.append(dat)
+    
+    with open('generated_files/all_strings.dat','w') as f:
+        f.write(",\n".join(dat_list))
+    
     with open('generated_files/parentTracks.dat','w') as f:
         dat = json.dumps(parentTracksData["_customData"]["_customEvents"], indent=4)[6:-2].replace("\n    ","\n")
         f.write(dat)
+
     print("Completed!")
     os.system('PAUSE')
