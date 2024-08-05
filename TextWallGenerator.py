@@ -189,8 +189,12 @@ def GetInputSettings(filename):
         with open(filename, encoding='shift_jis', newline='') as f:
             rows = [row for row in csv.reader(f)]
     except:
-        print(f"[ERROR] {filename}の取得に失敗しました。")
-        os.system('PAUSE'); exit()
+        try:
+            with open(filename, encoding='utf_8', newline='') as f:
+                rows = [row for row in csv.reader(f)]
+        except:
+            print(f"[ERROR] {filename}の取得に失敗しました。")
+            os.system('PAUSE'); exit()
     setting_keys = rows[0]
     input_settings = [dict(zip(setting_keys, setting_values)) for setting_values in rows[1:]]          
     return input_settings
