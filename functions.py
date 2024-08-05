@@ -17,7 +17,6 @@ def char2image(char, ttfontname):
 
     # 用意した画像に文字列を描く
     font = ImageFont.truetype(ttfontname, fontsize)
-    draw.textsize(char,font=font)
     textTopLeft = (0,0)
     draw.text(textTopLeft, char, fill=(0,0,0), font=font)
 

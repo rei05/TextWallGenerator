@@ -175,32 +175,66 @@ def makeWall(char,font,n_dot):
     dat = {'_obstacles':_obstacles}
     return dat
 
+def GetEnvSettings(filename):
+    try:
+        with open(filename) as f:
+            env_settings = yaml.safe_load(f)
+    except:
+        print(f"[ERROR] {filename}の取得に失敗しました。")
+        os.system('PAUSE'); exit()
+    return env_settings
 
+def GetInputSettings(filename):
+    try:
+        with open(filename, encoding='shift_jis', newline='') as f:
+            rows = [row for row in csv.reader(f)]
+    except:
+        try:
+            with open(filename, encoding='utf_8', newline='') as f:
+                rows = [row for row in csv.reader(f)]
+        except:
+            print(f"[ERROR] {filename}の取得に失敗しました。")
+            os.system('PAUSE'); exit()
+    setting_keys = rows[0]
+    input_settings = [dict(zip(setting_keys, setting_values)) for setting_values in rows[1:]]          
+    return input_settings
 
-if __name__ == '__main__':
+def CheckInputValue(input_settings):
+    expected_types = {"Text":str,"TrackName":str,"StartBeatTime":float,"Duration":float,
+                      "Direction":str,"Font":str,"DotSize":int,"Behavior":str}
+    for i_row, setting in enumerate(input_settings):
+        for expected_key, expected_type in expected_types.items():
+            if expected_key not in setting.keys():
+                print(f"[ERROR] {expected_key}の取得に失敗しました。")
+                os.system('PAUSE'); exit()
+            if (expected_type==float)|(expected_type==int):
+                try:
+                    float(setting[expected_key])
+                except:
+                    print(f"[ERROR] {i_row+2}行目の{expected_key}の値が不正です。")
+                    os.system('PAUSE'); exit()
+            if setting[expected_key].split()[0]=="":
+                print(f"[ERROR] {i_row+2}行目の{expected_key}の値が不正です。")
+                os.system('PAUSE'); exit()
 
-    with open('settings.yaml') as f:
-        settings = yaml.safe_load(f)
-
-    with open('input.csv', encoding='shift_jis', newline='') as f:
-        setting = [row for row in csv.reader(f)][1:]
+def main(env_settings, input_settings):
 
     customEvents = []
+    obstacles_dict = {}
 
-    os.makedirs("generated_files", exist_ok=True)
 
-    for row in setting:
-        text       = row[0]
-        track_name = row[1]
-        t_start    = float(row[2])
-        duration   = float(row[3]) - settings["HJD"]*2
-        direction  = row[4]
-        font       = "fonts/" + row[5]
-        dot_size   = int(row[6])
-        behavior   = row[7]
+    for setting in input_settings:
+        text       = setting["Text"]
+        track_name = setting["TrackName"]
+        t_start    = float(setting["StartBeatTime"])
+        duration   = float(setting["Duration"]) - env_settings["HJD"]*2
+        direction  = setting["Direction"]
+        font       = "fonts/" + setting["Font"]
+        dot_size   = int(setting["DotSize"])
+        behavior   = setting["Behavior"]
         length     = len(text)
         size       = 1
-        time       = t_start + settings["HJD"]
+        time       = t_start + env_settings["HJD"]
         
         charShift = 1
         obstacles = {"_obstacles":[]}
@@ -248,16 +282,37 @@ if __name__ == '__main__':
             if isSmall(char) & (direction != "v"):
                 charShift -= size*0.15
 
-        with open('generated_files/'+track_name+'.dat','w') as f:
-            dat = json.dumps(obstacles["_obstacles"], indent=4)[6:-2].replace("\n    ","\n")
-            f.write(dat)
+        obstacles_dict[track_name] = obstacles
 
         customEvents.append({'_time':0,'_type':'AssignTrackParent',
                              '_data':{'_parentTrack': track_name,
                                       '_childrenTracks': child_tracks}
                             })
+        
+    return obstacles_dict, customEvents
 
+
+if __name__ == '__main__':
+
+    env_settings   = GetEnvSettings('settings.yaml')
+    input_settings = GetInputSettings('input.csv')
+    CheckInputValue(input_settings)
+
+    os.makedirs("generated_files", exist_ok=True)
+
+    obstacles_dict, customEvents = main(env_settings, input_settings)
     parentTracksData = {'_customData':{'_customEvents':customEvents}}
+
+    dat_list = []
+    for track_name, obstacles in obstacles_dict.items():
+        with open('generated_files/'+track_name+'.dat','w') as f:
+            dat = json.dumps(obstacles["_obstacles"], indent=4)[6:-2].replace("\n    ","\n")
+            f.write(dat)
+            dat_list.append(dat)
+    
+    with open('generated_files/all_strings.dat','w') as f:
+        f.write(",\n".join(dat_list))
+    
     with open('generated_files/parentTracks.dat','w') as f:
         dat = json.dumps(parentTracksData["_customData"]["_customEvents"], indent=4)[6:-2].replace("\n    ","\n")
         f.write(dat)
