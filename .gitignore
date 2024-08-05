@@ -5,3 +5,4 @@ fonts/
 generated_files/
 build/
 dist/
+venv/
